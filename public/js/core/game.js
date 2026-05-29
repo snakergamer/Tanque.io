@@ -76,7 +76,7 @@ const game = {
         if (menu) menu.style.display = 'none';
         if (ui) ui.classList.remove('hidden');
         this.state = 'PLAYING';
-        Network.joinGame(username, typeof getSkinColor === 'function' ? getSkinColor() : '#00f2ff');
+        network.joinGame(username, typeof getSkinColor === 'function' ? getSkinColor() : '#00f2ff');
     },
 
     receiveServerState(data) {
@@ -108,7 +108,7 @@ const game = {
         this.bullets = data.bullets || [];
         this.lastServerTime = data.time;
 
-        const localPlayer = this.players[Network.socket.id];
+        const localPlayer = this.players[network.socket.id];
         if (localPlayer) {
             this.updateUI(localPlayer);
             this.camera.targetX = localPlayer.x;
@@ -158,11 +158,11 @@ const game = {
     },
 
     upgradeStat(index) {
-        Network.sendInput({ type: 'upgrade', index: index });
+        network.sendInput({ type: 'upgrade', index: index });
     },
 
     evolveTo(className) {
-        Network.sendInput({ type: 'evolve', class: className });
+        network.sendInput({ type: 'evolve', class: className });
         const evoPanel = document.getElementById('evolution-panel');
         if (evoPanel) evoPanel.innerHTML = '';
     },
@@ -179,7 +179,7 @@ const game = {
         });
 
         if (typeof keys !== 'undefined' && typeof mouse !== 'undefined') {
-            Network.sendInput({
+            network.sendInput({
                 up: keys['KeyW'] || keys['ArrowUp'],
                 down: keys['KeyS'] || keys['ArrowDown'],
                 left: keys['KeyA'] || keys['ArrowLeft'],

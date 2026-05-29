@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginBtn.onclick = () => {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
-            if (user && pass) Network.login(user, pass);
+            if (user && pass) network.login(user, pass);
             else alert('Ingresa usuario y contraseña');
         };
     }
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
         registerBtn.onclick = () => {
             const user = document.getElementById('username').value;
             const pass = document.getElementById('password').value;
-            if (user && pass) Network.register(user, pass);
+            if (user && pass) network.register(user, pass);
             else alert('Ingresa usuario y contraseña');
         };
     }

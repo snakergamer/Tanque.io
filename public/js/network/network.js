@@ -12,7 +12,7 @@ const socket = io(SERVER_URL, {
     upgrade: false
 });
 
-const Network = {
+const network = {
     socket: socket,
     isConnected: false,
 
@@ -27,7 +27,7 @@ const Network = {
             }
         });
 
-        // REPARACIÓN: Sincronización real de estado
+        // Sincronización real de estado
         this.socket.on('gameState', (data) => {
             if (typeof game !== 'undefined' && game.state === 'PLAYING') {
                 game.receiveServerState(data);
@@ -69,4 +69,5 @@ const Network = {
     joinGame(name, color) { this.socket.emit('join', { name, color }); }
 };
 
-Network.init();
+window.network = network;
+network.init();
