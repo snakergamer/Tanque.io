@@ -2,6 +2,30 @@
 const { QTNode, Rect } = require('./QuadTree');
 const Tank = require('./Tank');
 const Bullet = require('./Bullet');
+const Entity = require('./Entity');
+const Vector = require('./Vector');
+
+class Shape extends Entity {
+    constructor(x, y, type) {
+        let r, hp, xp, color;
+        switch(type) {
+            case 'square': r = 20; hp = 30; xp = 15; color = '#ffe869'; break;
+            case 'triangle': r = 22; hp = 100; xp = 50; color = '#fc7677'; break;
+            case 'pentagon': r = 30; hp = 400; xp = 250; color = '#768dfc'; break;
+            default: r = 20; hp = 30; xp = 15; color = '#ffe869';
+        }
+        super(x, y, r, color, hp);
+        this.type = type;
+        this.xpValue = xp;
+        this.vel = new Vector((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2);
+    }
+
+    update(mapSize) {
+        this.pos.add(this.vel);
+        if (this.pos.x < 0 || this.pos.x > mapSize) this.vel.x *= -1;
+        if (this.pos.y < 0 || this.pos.y > mapSize) this.vel.y *= -1;
+    }
+}
 
 class GameLoop {
     constructor(io) {
@@ -12,6 +36,7 @@ class GameLoop {
         this.mapSize = 8000;
         this.tickRate = 60;
         this.lastTick = Date.now();
+        this.maxEntities = 400;
     }
 
     start() {
@@ -19,9 +44,23 @@ class GameLoop {
         setInterval(() => this.tick(), 1000 / this.tickRate);
     }
 
+    spawnShapes() {
+        while (this.entities.length < this.maxEntities) {
+            const x = Math.random() * this.mapSize;
+            const y = Math.random() * this.mapSize;
+            const rand = Math.random();
+            let type = 'square';
+            if (rand > 0.95) type = 'pentagon';
+            else if (rand > 0.8) type = 'triangle';
+            this.entities.push(new Shape(x, y, type));
+        }
+    }
+
     tick() {
         const now = Date.now();
         this.lastTick = now;
+
+        this.spawnShapes();
 
         const qt = new QTNode(new Rect(0, 0, this.mapSize, this.mapSize), 10);
         
@@ -36,7 +75,21 @@ class GameLoop {
             });
         }
 
-        // 2. Actualizar Balas
+        // 2. Actualizar Entidades (Figuras)
+        for (let i = this.entities.length - 1; i >= 0; i--) {
+            const ent = this.entities[i];
+            ent.update(this.mapSize);
+            if (ent.isDead) {
+                this.entities.splice(i, 1);
+                continue;
+            }
+            qt.insert({ 
+                obj: ent, 
+                bounds: new Rect(ent.pos.x - ent.radius, ent.pos.y - ent.radius, ent.radius * 2, ent.radius * 2) 
+            });
+        }
+
+        // 3. Actualizar Balas y Colisiones
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const b = this.bullets[i];
             b.update(this);
@@ -45,9 +98,9 @@ class GameLoop {
                 continue;
             }
 
-            // 3. Colisiones Bala vs Tanque
-            const nearby = qt.query(new Rect(b.pos.x - 20, b.pos.y - 20, 40, 40));
-            for (let target of nearby) {
+            const nearby = qt.query(new Rect(b.pos.x - 50, b.pos.y - 50, 100, 100));
+            for (let targetObj of nearby) {
+                const target = targetObj.obj;
                 if (target === b.owner || target.isDead) continue;
                 
                 const distSq = b.pos.distSq(target.pos);
@@ -67,6 +120,7 @@ class GameLoop {
     broadcastState() {
         const snapshot = {
             players: {},
+            entities: [],
             bullets: [],
             time: Date.now()
         };
@@ -79,19 +133,34 @@ class GameLoop {
                 y: Math.round(p.pos.y),
                 angle: p.angle,
                 hp: Math.round(p.hp),
-                maxHp: p.maxHp,
+                maxHp: Math.round(p.maxHp),
                 score: Math.floor(p.score),
                 lvl: p.lvl,
                 color: p.color,
-                name: p.name
+                name: p.name,
+                tankClass: p.tankClass,
+                upgrades: p.upgradesAvailable,
+                stats: p.stats,
+                evoOptions: p.evoOptions,
+                radius: p.radius
             };
         }
 
-        // Enviar balas (solo lo básico para ahorrar ancho de banda)
+        snapshot.entities = this.entities.map(e => ({
+            x: Math.round(e.pos.x),
+            y: Math.round(e.pos.y),
+            type: e.type,
+            color: e.color,
+            radius: e.radius,
+            hp: e.hp,
+            maxHp: e.maxHp
+        }));
+
         snapshot.bullets = this.bullets.map(b => ({
             x: Math.round(b.pos.x),
             y: Math.round(b.pos.y),
-            color: b.color
+            color: b.color,
+            radius: b.radius
         }));
 
         this.io.emit('gameState', snapshot);
@@ -115,7 +184,15 @@ class GameLoop {
 
     handleInput(socketId, inputData) {
         const player = this.players[socketId];
-        if (player) player.applyInputs(inputData);
+        if (!player) return;
+
+        if (inputData.type === 'upgrade') {
+            player.upgradeStat(inputData.index);
+        } else if (inputData.type === 'evolve') {
+            player.evolve(inputData.class);
+        } else {
+            player.applyInputs(inputData);
+        }
     }
 
     onEntityDeath(entity, killer) {
@@ -129,9 +206,10 @@ class GameLoop {
         
         // Dar XP al asesino
         if (killer && killer.owner && killer.owner instanceof Tank) {
-            // killer.owner.gainXp(entity.xpValue || 100);
+            killer.owner.gainXp(entity.xpValue || 100);
         }
     }
 }
 
 module.exports = GameLoop;
+

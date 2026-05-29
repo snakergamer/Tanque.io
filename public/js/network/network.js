@@ -2,7 +2,7 @@
 
 // 1. Detección dinámica del servidor
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const SERVER_URL = isLocal ? 'http://localhost:3000' : 'https://tu-app-en-render.onrender.com'; // CAMBIA ESTA URL CUANDO TENGAS LA DE RENDER
+const SERVER_URL = isLocal ? 'http://localhost:3000' : 'https://tanque-backend.onrender.com';
 
 console.log(`🌐 Conectando a servidor en: ${SERVER_URL}`);
 
