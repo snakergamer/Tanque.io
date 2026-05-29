@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: tanque-io-server
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server/server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 20.0.0
+      - key: PORT
+        value: 3000
+    healthCheckPath: /

@@ -1,0 +1,39 @@
+type User @table {
+  username: String!
+  passwordHash: String!
+  email: String
+  createdAt: Timestamp!
+}
+
+type Player @table {
+  user: User!
+  level: Int!
+  experience: Int!
+  attributePoints: Int!
+  currentClassEvolution: ClassEvolution
+  lastLogin: Timestamp
+}
+
+type Attribute @table {
+  name: String!
+  description: String!
+}
+
+type PlayerAttribute @table(key: ["player", "attribute"]) {
+  player: Player!
+  attribute: Attribute!
+  value: Int!
+}
+
+type ClassEvolution @table {
+  name: String!
+  description: String!
+  requiredLevel: Int!
+  parentClassEvolution: ClassEvolution
+}
+
+type PlayerUnlockedClassEvolution @table(key: ["player", "classEvolution"]) {
+  player: Player!
+  classEvolution: ClassEvolution!
+  unlockedAt: Timestamp!
+}

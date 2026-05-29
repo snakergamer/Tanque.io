@@ -1,0 +1,156 @@
+:root {
+    --bg: #08080a; --grid: #15151a; --player: #00f2ff; --enemy: #ff2b56;
+    --square: #ffee00; --triangle: #ff4d4d; --pentagon: #5577ff; --alpha: #bb00ff;
+    --ui-bg: rgba(5, 5, 10, 0.95); --ui-border: rgba(255, 255, 255, 0.2);
+    --text: #ffffff; --panel-blur: blur(10px);
+}
+:root.light-mode {
+    --bg: #e4e4e9; --grid: #d0d0d8; --ui-bg: rgba(240, 240, 245, 0.95);
+    --ui-border: rgba(0, 0, 0, 0.1); --text: #111116;
+}
+
+body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Arial', sans-serif; background: var(--bg); user-select: none; touch-action: none; color: var(--text); }
+
+/* --- CAPAS DE RENDERIZADO (JERARQUÍA ESTRICTA) --- */
+canvas#gameCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: block; }
+
+#ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; opacity: 1; transition: opacity 0.4s; }
+
+.screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; background: rgba(4, 4, 6, 0.7); backdrop-filter: blur(8px); }
+
+/* MODALES FLOTANTES (ELITE Z-INDEX) */
+.modal { 
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+    width: 90%; max-width: 400px; 
+    z-index: 100; 
+    display: none; flex-direction: column; align-items: center; justify-content: center; 
+    background: var(--ui-bg); border: 3px solid #000000; border-radius: 20px; 
+    padding: 30px; backdrop-filter: blur(15px); color: #fff; 
+    box-shadow: 8px 8px 0px #000000;
+    pointer-events: auto;
+}
+.show-modal { display: flex !important; }
+
+/* Ajustes Modo Claro */
+:root.light-mode .modal { color: #111116; }
+:root.light-mode .ach-title { color: #111116; font-weight: 900; }
+:root.light-mode .ach-desc { color: #22222b; font-weight: 600; }
+:root.light-mode .achievement-item.unlocked .ach-desc { color: #6d5a00; }
+:root.light-mode .achievement-item.unlocked .ach-title { color: #8a6d00; }
+:root.light-mode .achievement-item { background: rgba(0,0,0,0.05); }
+
+/* Botón de Cierre */
+.close-btn { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 2rem; font-weight: 900; color: var(--enemy); transition: 0.2s; }
+.close-btn:hover { transform: scale(1.2); }
+
+/* --- ELEMENTOS DERECHOS (PAUSA Y FPS) --- */
+#right-ui { position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; gap: 12px; align-items: flex-end; pointer-events: none; }
+
+#pause-btn { 
+    width: 60px; height: 60px; pointer-events: auto;
+    background: var(--ui-bg); border: 2px solid var(--ui-border); border-radius: 15px; 
+    color: var(--text); font-size: 1.8rem; cursor: pointer; 
+    display: flex; align-items: center; justify-content: center; 
+    z-index: 110; backdrop-filter: blur(5px); 
+}
+
+#ui-fps { font-weight: 900; font-size: 0.9rem; color: #00ff08; text-shadow: 1px 1px 2px #000; z-index: 110; }
+:root.light-mode #ui-fps { color: #111116; text-shadow: none; }
+
+/* --- RESTO DE UI --- */
+#top-bar { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; pointer-events: auto; background: var(--ui-bg); padding: 10px; border-radius: 15px; border: 2px solid var(--ui-border); text-align: center; }
+.bar-bg { background: rgba(0,0,0,0.5); height: 20px; border-radius: 10px; overflow: hidden; position: relative; margin-top: 5px; }
+#xp-bar { background: linear-gradient(90deg, #00ff08, #ccff00); height: 100%; width: 0%; transition: 0.3s; }
+#class-text { position: absolute; top: 0; left: 0; width: 100%; text-align: center; font-weight: 900; line-height: 20px; font-size: 0.8rem; text-shadow: 1px 1px 2px #000; }
+
+#upgrade-panel { position: absolute; bottom: 85px; left: 20px; width: 280px; background: var(--ui-bg); border: 2px solid var(--ui-border); border-radius: 15px; padding: 20px; pointer-events: auto; transition: 0.4s ease-out; }
+#upgrade-panel.collapsed { transform: translateX(-350px); opacity: 0; }
+.upgrade-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.upg-bar-container { flex-grow: 1; display: flex; gap: 4px; height: 14px; }
+.upg-slot { flex: 1; background: rgba(255,255,255,0.1); border-radius: 2px; }
+.upgrade-btn { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border: 1px solid var(--ui-border); color: #fff; cursor: pointer; border-radius: 5px; font-weight: 900; }
+.upgrade-btn.disabled { opacity: 0.1; pointer-events: none; }
+
+#toggle-upgrades { position: absolute; bottom: 20px; left: 20px; width: 55px; height: 55px; background: var(--ui-bg); border: 2px solid var(--ui-border); border-radius: 15px; color: #fff; font-size: 2rem; font-weight: 900; cursor: pointer; pointer-events: auto; }
+
+#leaderboard { background: var(--ui-bg); border: 2px solid var(--ui-border); border-radius: 12px; padding: 12px; width: 180px; pointer-events: auto; }
+.lb-entry { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 900; color: #00f2ff; margin-bottom: 5px; }
+.lb-entry.me { color: #fff; text-shadow: 0 0 10px #00f2ff; }
+
+#minimap-container { background: rgba(0,0,0,0.5); border: 2px solid var(--ui-border); border-radius: 12px; overflow: hidden; pointer-events: auto; }
+
+/* Menu Título y Botones */
+h1 { font-size: 5rem; text-shadow: 0 0 30px var(--player); margin: 0; font-weight: 900; }
+.menu-overlay { text-align: center; }
+.menu-buttons { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+.start-btn { background: linear-gradient(45deg, var(--player), #0077ff); color: #fff; border: none; padding: 15px 50px; font-size: 2rem; border-radius: 50px; font-weight: 900; cursor: pointer; box-shadow: 0 10px 30px rgba(0,242,255,0.4); }
+.icon-btn { width: 65px; height: 65px; background: var(--ui-bg); border: 2px solid var(--ui-border); border-radius: 15px; font-size: 2rem; cursor: pointer; color: #fff; transition: 0.2s; }
+.icon-btn:hover { transform: scale(1.1); }
+
+/* Achievements List */
+.achievement-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-radius: 10px; background: rgba(255,255,255,0.05); margin-bottom: 8px; border: 1px solid transparent; opacity: 0.3; filter: grayscale(1); transition: 0.3s; }
+.achievement-item.unlocked { opacity: 1; filter: grayscale(0); border-color: #ffd700; background: rgba(255,215,0,0.1); }
+.ach-icon { font-size: 1.8rem; }
+.ach-title { font-weight: 900; display: block; }
+.ach-desc { font-size: 0.75rem; color: #aaa; }
+.unlocked-label { font-size: 0.7rem; color: #ffd700; font-weight: 900; margin-top: 2px; }
+
+/* --- TIENDA DE SKINS --- */
+.shop-item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--ui-border);
+    border-radius: 12px; cursor: pointer; transition: 0.2s;
+}
+.shop-item:hover { background: rgba(255,255,255,0.1); }
+.shop-item.equipped { border-color: var(--player); background: rgba(0,242,255,0.1); }
+.shop-item.owned { border-color: #4caf50; background: rgba(76,175,80,0.08); }
+.shop-item.locked { opacity: 0.45; filter: grayscale(0.6); cursor: not-allowed; }
+.shop-swatch {
+    width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+}
+.shop-info { flex-grow: 1; text-align: left; }
+.shop-name { font-weight: 900; font-size: 0.95rem; display: block; }
+.shop-desc { font-size: 0.7rem; color: #aaa; }
+.shop-btn {
+    background: #444; border: none; color: #fff; font-weight: 900;
+    padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;
+    flex-shrink: 0;
+}
+.shop-btn:hover { background: #666; }
+.shop-btn.equip { background: var(--player); color: #000; }
+.shop-btn.buy { background: #4caf50; }
+.shop-btn.owned-label { background: transparent; border: 1px solid #4caf50; color: #4caf50; cursor: default; }
+.shop-btn.equipped-label { background: transparent; border: 1px solid var(--player); color: var(--player); cursor: default; }
+
+.menu-btn { background: #444; color: #fff; border: none; padding: 12px 25px; border-radius: 10px; font-weight: 900; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
+.menu-btn:hover { background: #666; }
+
+.hidden { display: none !important; }
+
+/* Switch & Controls */
+.setting-row { display: flex; justify-content: space-between; align-items: center; width: 100%; font-weight: 900; }
+.switch { position: relative; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #333; transition: 0.4s; border-radius: 24px; cursor: pointer; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; transition: 0.4s; border-radius: 50%; }
+input:checked + .slider { background: var(--player); }
+input:checked + .slider:before { transform: translateX(20px); }
+input[type=range] { width: 100px; }
+
+/* --- EVOLUTION PANEL REPARADO --- */
+#evolution-panel { 
+    position: absolute; top: 110px; left: 50%; transform: translateX(-50%); 
+    display: flex; flex-direction: row; justify-content: center; gap: 10px; 
+    z-index: 30; pointer-events: auto; width: auto; max-width: 90%; 
+}
+.evo-btn { 
+    background: var(--ui-bg); color: var(--text); border: 2px solid var(--ui-border); 
+    padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: 900; 
+    font-size: 0.95rem; text-transform: uppercase; backdrop-filter: blur(10px); 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4); transition: transform 0.1s, background 0.2s; 
+    display: block; 
+}
+.evo-btn:active { background: var(--player); color: #000; transform: scale(0.95); }
+.evo-btn:hover { transform: translateY(-3px); background: rgba(255,255,255,0.1); }
+

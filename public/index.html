@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tanque Evolución .io - Arena Pro Carrier</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-layer" class="hidden">
+        <div id="top-bar">
+            <div id="level-text">NIVEL <span id="ui-lvl">1</span></div>
+            <div class="bar-bg"><div id="xp-bar"></div><div id="class-text">Tanque</div></div>
+        </div>
+        <div id="evolution-panel"></div>
+        <div id="upgrade-panel" class="collapsed">
+            <div id="points-text">Puntos: <span id="ui-points">0</span></div>
+        </div>
+        <button id="toggle-upgrades">+</button>
+        <div id="right-ui">
+            <button id="pause-btn">⏸️</button>
+            <div id="ui-fps">0 FPS</div>
+            <div id="leaderboard"><div id="lb-content"></div></div>
+            <div id="minimap-container"><canvas id="minimap"></canvas></div>
+        </div>
+    </div>
+    
+    <!-- Pantalla de Inicio Vivo -->
+    <div id="screen-menu" class="screen">
+        <div class="menu-overlay">
+            <h1>TANQUE.IO</h1>
+            <p style="color: #666; letter-spacing: 6px; font-weight: 900; font-size: 1rem; margin: 5px 0 20px;">PORTAAVIONES EDITION</p>
+            
+            <!-- Panel Dual de Auth -->
+            <div id="auth-panel" style="margin-bottom: 20px;">
+                <input type="text" id="username" placeholder="Usuario" style="padding: 10px; border-radius: 5px; border: none; margin-bottom: 5px; width: 200px;"><br>
+                <input type="password" id="password" placeholder="Contraseña" style="padding: 10px; border-radius: 5px; border: none; margin-bottom: 10px; width: 200px;"><br>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="login-btn" class="start-btn" style="font-size: 0.9rem; padding: 8px 15px;">Entrar</button>
+                    <button id="register-btn" class="start-btn" style="font-size: 0.9rem; padding: 8px 15px; background: #607d8b;">Registro</button>
+                </div>
+            </div>
+
+            <div class="menu-stats">
+                <span id="best-score">Mejor Puntuación: 0</span>
+                <span id="best-level">Nivel Máximo: 1</span>
+            </div>
+
+            <div class="menu-buttons">
+                <button class="start-btn">Empezar</button>
+                <button id="load-btn" class="start-btn hidden" style="background: #4caf50; font-size: 1.2rem; padding: 12px 30px; margin-top: 10px;">Cargar Partida</button>
+                <div class="extra-buttons">
+                    <button id="menu-settings-btn" class="icon-btn">⚙️</button>
+                    <button id="menu-shop-btn" class="icon-btn">🎨</button>
+                    <button id="menu-trophies-btn" class="icon-btn">🏆</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales Flotantes -->
+    <div id="shop-menu" class="modal">
+        <div class="modal-content">
+            <div class="close-btn" id="close-shop">X</div>
+            <h2 class="settings-title">🎨 Tienda de Skins</h2>
+            <div id="shop-stats" style="margin: 8px 0 15px; font-weight: 900; color: #ffd700;">Score Récord: <span id="shop-highscore">0</span></div>
+            <div id="shop-grid" style="display:flex;flex-direction:column;gap:8px;width:100%;"></div>
+        </div>
+    </div>
+
+    <div id="settings-menu" class="modal">
+        <div class="modal-content">
+            <div class="close-btn" id="close-settings">X</div>
+            <h2 class="settings-title">Ajustes</h2>
+            <div class="setting-row">
+                <span>Modo Oscuro</span>
+                <label class="switch"><input type="checkbox" id="setting-darkmode" checked><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+                <span>Resolución Retina</span>
+                <label class="switch"><input type="checkbox" id="setting-retina" checked><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+                <span>Mostrar FPS</span>
+                <label class="switch"><input type="checkbox" id="setting-fps"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+                <span>Opacidad Interfaz</span>
+                <input type="range" id="setting-opacity" min="0.2" max="1.0" step="0.1" value="1.0">
+            </div>
+            <div class="setting-row">
+                <span>Gráficos Bajos</span>
+                <label class="switch"><input type="checkbox" id="setting-lowperf"><span class="slider"></span></label>
+            </div>
+        </div>
+    </div>
+
+    <div id="trophies-menu" class="modal">
+        <div class="modal-content">
+            <div class="close-btn" id="close-trophies">X</div>
+            <h2 class="settings-title">🏆 Logros</h2>
+            <div id="achievements-list"></div>
+        </div>
+    </div>
+
+    <div id="pause-menu" class="modal">
+        <div class="modal-content">
+            <h2 class="settings-title">Pausa</h2>
+            <button class="menu-btn" id="resume-btn">CONTINUAR</button>
+            <button class="menu-btn" id="save-btn">GUARDAR PARTIDA</button>
+            <button class="menu-btn" id="exit-btn" style="background: var(--enemy);">SALIR AL MENÚ</button>
+        </div>
+    </div>
+    
+    <div id="screen-gameover" class="screen hidden">
+        <h1 style="color: var(--enemy); text-shadow: 0 0 30px var(--enemy);">ELIMINADO</h1>
+        <p id="death-stats" style="color: #fff; margin: 25px 0; font-size: 1.4rem; font-weight: 800;"></p>
+        <button class="start-btn" style="background: var(--enemy); box-shadow: 0 10px 30px rgba(255,43,86,0.4);">Reintentar</button>
+    </div>
+
+    <!-- Scripts - Carga en orden estricto -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/network/network.js"></script>
+    <script src="js/core/quadtree.js"></script>
+    <script src="js/core/pool.js"></script>
+    <script src="js/entities/entity.js"></script>
+    <script src="js/entities/bullet.js"></script>
+    <script src="js/entities/shape.js"></script>
+    <script src="js/entities/tank.js"></script>
+    <script src="js/input/controls.js"></script>
+    <script src="js/ui/interface.js"></script>
+    <script src="js/core/game.js"></script>
+</body>
+</html>

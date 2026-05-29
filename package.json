@@ -1,0 +1,22 @@
+{
+  "name": "xd",
+  "version": "1.0.0",
+  "description": "Este proyecto es un juego web 2D de disparos multijugador (estilo Diep.io), renderizado en **HTML5 Canvas** y escrito completamente en **Vanilla JavaScript** (sin dependencias ni motores externos).",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "firebase": "^12.14.0",
+    "firebase-admin": "^13.10.0",
+    "socket.io": "^4.8.3"
+  }
+}
