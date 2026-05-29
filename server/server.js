@@ -13,10 +13,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ["https://tanque-io.web.app", "https://tanque-io.firebaseapp.com"],
+        origin: ["https://tanque-io.web.app", "https://tanque-io.firebaseapp.com", "http://localhost:3000"],
         methods: ["GET", "POST"],
         credentials: true
-    }
+    },
+    transports: ['websocket', 'polling']
 });
 
 const PORT = process.env.PORT || 3000;
