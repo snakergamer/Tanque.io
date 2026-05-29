@@ -6,8 +6,11 @@ const SERVER_URL = isLocal ? 'http://localhost:3000' : 'https://tanque-backend.o
 
 console.log("🌐 Conectando a servidor en:", SERVER_URL);
 
-// Aquí se usa el "io" que viene desde el CDN de arriba
-const socket = io(SERVER_URL, { transports: ['websocket'] });
+// Asegurar compatibilidad limpia con Render sin bloqueos
+const socket = io(SERVER_URL, { 
+    transports: ['polling', 'websocket'],
+    withCredentials: true
+});
 
 const network = {
     socket: socket,

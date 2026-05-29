@@ -1,25 +1,26 @@
 // server/firebase.js
-const admin = require('firebase-admin');
-const path = require('path');
+const admin = require("firebase-admin");
+const path = require("path");
+const fs = require("fs");
 
-// Intentar cargar las credenciales de Firebase
+// Intentar buscar la llave en la raíz (como lo organiza Render) o en la carpeta superior (como en local)
+let secretPath = path.join(__dirname, "serviceAccountKey.json");
+
+if (!fs.existsSync(secretPath)) {
+    // Si no está ahí, buscar en la carpeta superior (en caso de que server.js lo requiera desde otro lado)
+    secretPath = path.join(__dirname, "../serviceAccountKey.json");
+}
+
+console.log("🔑 Cargando credenciales de Firebase desde:", secretPath);
+
 try {
-    // Render guarda los archivos en la raíz del repo o donde se suban.
-    // Usamos path.join(__dirname, 'serviceAccountKey.json') para asegurar la ruta absoluta en Linux.
-    const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
-    const serviceAccount = require(serviceAccountPath);
-
     admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert(require(secretPath))
     });
-
-    console.log('✅ Firebase Admin inicializado correctamente');
+    console.log("✅ Firebase Admin inicializado correctamente en el entorno activo");
 } catch (error) {
-    console.error('⚠️ Error: No se pudo cargar serviceAccountKey.json');
-    console.error('Buscado en:', path.join(__dirname, 'serviceAccountKey.json'));
-    console.error('Detalle:', error.message);
+    console.error("❌ Error crítico al inicializar Firebase Admin:", error);
 }
 
 const db = admin.firestore();
-
 module.exports = db;
