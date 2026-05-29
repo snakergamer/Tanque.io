@@ -1,25 +1,32 @@
-// server/firebase.js
 const admin = require("firebase-admin");
 const path = require("path");
-const fs = require("fs");
-
-// Intentar buscar la llave en la raíz (como lo organiza Render) o en la carpeta superior (como en local)
-let secretPath = path.join(__dirname, "serviceAccountKey.json");
-
-if (!fs.existsSync(secretPath)) {
-    // Si no está ahí, buscar en la carpeta superior (en caso de que server.js lo requiera desde otro lado)
-    secretPath = path.join(__dirname, "../serviceAccountKey.json");
-}
-
-console.log("🔑 Cargando credenciales de Firebase desde:", secretPath);
 
 try {
-    admin.initializeApp({
-        credential: admin.credential.cert(require(secretPath))
-    });
-    console.log("✅ Firebase Admin inicializado correctamente en el entorno activo");
+    // Si estamos en Render, leerá la variable de entorno; si estamos en local, usará el archivo
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        console.log("🔑 Detectada variable de entorno FIREBASE_SERVICE_ACCOUNT");
+        const serviceAccountJson = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccountJson)
+        });
+    } else {
+        console.log("💻 Ejecutando en entorno local, buscando archivo serviceAccountKey.json...");
+        // Intentar varias rutas comunes para local
+        let serviceAccount;
+        try {
+            serviceAccount = require("./serviceAccountKey.json");
+        } catch (e) {
+            serviceAccount = require("../serviceAccountKey.json");
+        }
+        
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
+    }
+    console.log("✅ Firebase Admin conectado e inicializado correctamente.");
 } catch (error) {
-    console.error("❌ Error crítico al inicializar Firebase Admin:", error);
+    console.error("❌ Error crítico en la inicialización de Firebase:", error);
 }
 
 const db = admin.firestore();
