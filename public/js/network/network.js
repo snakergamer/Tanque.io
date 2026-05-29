@@ -1,16 +1,13 @@
 // public/js/network/network.js
 
-// 1. Detección dinámica del servidor
+// Forzar la conexión al servidor de Render si no es localhost
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const SERVER_URL = isLocal ? 'http://localhost:3000' : 'https://tanque-backend.onrender.com';
 
-console.log(`🌐 Conectando a servidor en: ${SERVER_URL}`);
+console.log("🌐 Conectando a servidor en:", SERVER_URL);
 
-// Configuración de socket con transporte forzado y CORS prep
-const socket = io(SERVER_URL, {
-    transports: ['websocket'],
-    upgrade: false
-});
+// Aquí se usa el "io" que viene desde el CDN de arriba
+const socket = io(SERVER_URL, { transports: ['websocket'] });
 
 const network = {
     socket: socket,
@@ -69,5 +66,6 @@ const network = {
     joinGame(name, color) { this.socket.emit('join', { name, color }); }
 };
 
+// CRÍTICO: Exportarlo en minúsculas para que interface.js lo encuentre
 window.network = network;
 network.init();

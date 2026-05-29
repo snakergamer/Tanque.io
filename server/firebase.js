@@ -1,10 +1,11 @@
-// server/database.js
+// server/firebase.js
 const admin = require('firebase-admin');
 const path = require('path');
 
 // Intentar cargar las credenciales de Firebase
 try {
-    // Buscamos el archivo en la misma carpeta que database.js
+    // Render guarda los archivos en la raíz del repo o donde se suban.
+    // Usamos path.join(__dirname, 'serviceAccountKey.json') para asegurar la ruta absoluta en Linux.
     const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
     const serviceAccount = require(serviceAccountPath);
 
